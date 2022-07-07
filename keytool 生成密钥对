@@ -1,0 +1,60 @@
+先cmd到要创建证书库的目录，我这里是在D盘下创建了一个keySotre的目录，
+先从cmd里cd 到D:\newwork\keySotre目录
+
+1.1 生成证书库和证书
+keytool -genkeypair ^
+        -alias myusecurity ^
+        -keyalg RSA ^
+        -keypass password^
+        -sigalg SHA256withRSA ^
+        -dname "cn=gx,ou=si,o=unicom.si,l=Beijing,st=Beijing,c=CN" ^
+        -validity 3650 ^
+        -keystore myuKeyStore.jks ^
+        -storetype JKS ^
+        -storepass password
+在windows里，换行使用^符号，在linux使用\符号
+说明：
+
+keytool 是jdk提供的工具，该工具名为”keytool“
+alias myusecurity 此处“myusecurity “为别名，可以是任意字符，只要不提示错误即可。因一个证书库中可以存放多个证书，通过别名标识证书
+keyalg RSA 此处”RSA“为密钥的算法。可以选择的密钥算法有：RSA、DSA、EC。
+keysize 4096 此处”4096“为密钥长度。keysize与keyalg默认对应关系：
+2048 (when using -genkeypair and -keyalg is “RSA”)
+1024 (when using -genkeypair and -keyalg is “DSA”)
+256 (when using -genkeypair and -keyalg is “EC”)
+keypass password 此处”password “为本条目的密码(私钥的密码)。最好与storepass一致。
+sigalg SHA256withRSA 此处”SHA256withRSA“为签名算法。keyalg=RSA时，签名算法有：MD5withRSA、SHA1withRSA、SHA256withRSA、SHA384withRSA、SHA512withRSA。keyalg=DSA时，签名算法有：SHA1withDSA、SHA256withDSA。此处需要注意：MD5和SHA1的签名算法已经不安全。
+dname “cn=www.mydomain.com,ou=xxx,o=xxx,l=Beijing,st=Beijing,c=CN” 在此填写证书信息。”CN=名字与姓氏/域名,OU=组织单位名称,O=组织名称,L=城市或区域名称,ST=州或省份名称,C=单位的两字母国家代码”
+validity 3650 此处”3650“为证书有效期天数。
+keystore myuKeyStore.jks 此处”myuKeyStore.jks“为密钥库的名称。此处也给出绝对路径。默认在当前目录创建证书库。
+storetype JKS 此处”JKS “为证书库类型。可用的证书库类型为：JKS、PKCS12等。jdk9以前，默认为JKS。自jdk9开始，默认为PKCS12。
+storepass mypassword 此处”mypassword “为证书库密码(私钥的密码)。最好与keypass 一致。
+这样你会在D:\newwork\keyStore目录下得到一个myuKeyStore.jks的文件。
+
+1.2 查看证书库
+keytool -list -v -keystore myuKeyStore.jks -storepass "password"
+其中-storepass是密钥库的密码
+会出现如下图：
+
+
+1.3 往证书库里添加新的密钥对
+执行以下命令可以往刚才的密钥库里在添加新的密钥
+
+keytool -genkey ^
+-keystore myuKeyStore.jks ^
+-alias helloworld ^
+-keyalg RSA ^
+-validity  10 ^
+-dname "cn=127.0.0.1,ou=111,o=unicom.si,l=Beijing,st=Beijing,c=CN" ^
+-keypass helloworld ^
+-storepass  password
+1.4 导出公钥
+1、从密钥库中导出DER格式公钥（证书）的命令：
+keytool -exportcert -file myusecurity_pub.crt -keystore myuKeyStore.jks -alias myusecurity
+2、从密钥库中导出PEM格式公钥（证书）的命令：
+keytool -exportcert -rfc -file publie2.crt -keystore keystore.jks -alias test
+第一种方式测试了，可用，第二种方法没试。
+用第一种方法导出后得到一个文件myusecurity_pub.crt，这个文件可以在JWT的时候当作公钥来使用
+————————————————
+版权声明：本文为CSDN博主「TIMI-Nian」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/gezilan/article/details/80420523
