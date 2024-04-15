@@ -214,5 +214,10 @@ private synchronized Socket await() {
 
 这也意味着，一旦 Connector 分配了一个 Socket 给到 Processor，后者就能立即结束等待，拿到 Socket 后调用 Process 方法继续后面的工作。这时 available 的状态立刻修改，进而用 notifyAll 方法唤醒 Connector 的等待线程，Connector 就可以全身而退，去处理下一个 HttpProcessor 了。
 
-#### 
+#### 引入HttpRequest与HttpResponse
 
+![引入HttpRequest与HttpResponse](img/引入HttpRequest与HttpResponse.webp)
+
+#### 引入门面模式封装内部实现类
+
+![引入门面模式封装内部实现类](img/引入门面模式封装内部实现类.webp)
