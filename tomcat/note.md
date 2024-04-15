@@ -221,3 +221,31 @@ private synchronized Socket await() {
 #### 引入门面模式封装内部实现类
 
 ![引入门面模式封装内部实现类](img/引入门面模式封装内部实现类.webp)
+
+#### 解析参数：通过引入Cookie和Session避免反复登录
+
+Cookie 也是放在 Header 里的，固定格式是 Cookie: userName=xxxx;password=pwd;，因此我们再次解析 Header 的时候，如果发现 Header 的名称是 Cookie，就进一步解析 Cookie。因为 Cookie 的数据结构需要遵从 javax.servlet.http.Cookie 规定，而 request 里可以包含多个 Cookie，所以我们会用数组来存储。
+
+在解析 Cookie 后我们再看一下 Session，其实这两部分的改造可以放在一起，所以我们后续一并讨论。
+
+HTTP 协议本身是无状态的，但是在网站登录后我们又不希望一跳转页面就需要重新输入账号密码登录，在这种情况下就需要记住第一次登录状态，而 Servlet 规范就规定了使用 Session 记住用户状态，定义接口为 javax.servlet.http.HttpSession。
+
+Session 由服务器创建，存在 SessionID，依靠 URL 或者是 Cookie 传送，把名称定义成 jsessionid。今后浏览器与服务器之间的数据交换都带上这个 jsessionid. 然后程序可以根据 jsessionid 拿到这个 Session，把一些状态数据存储在 Session 里。
+
+一个 Session 其实可以简单地看成一个 Map 结构，然后由我们的 Server 为每个客户端创建一个 Session。
+
+我们需要明确，创建 Session 的是 Server，也就是 Servlet 容器，比如 Tomcat 或者 MiniTomcat。而客户端 Client 对 Servlet 的处理流程里只是使用 Session 存储的数据。程序员通过 HttpServletRequest#getSession() 获取返回的 HttpSession。
+
+Servlet 容器根据收到的 HTTP 请求创建 Session，也可以在客户端程序调用 getSession 方法的时候创建。上述过程完毕之后，Response 返回参数内会回写 Sessionid，这是通过在响应头中设置 set-cookie 参数实现的。
+
+整个 Session 创建获取的情况是这样的：
+
+1. 对一个全新的客户端发送 HTTP 请求到 Server：Server 发现这是一个全新的请求，为它创建 Session，分配 Sessionid，并在 Response 的返回头中设置 Set-Cookie。生成的 Session 可能存放了某些身份认证识别的内容。
+2. 客户端再次请求，这次在请求头 Cookie 内带上回传的 Sessionid：Server 发现第二次请求带有 Sessionid，根据 id 匹配到 Session，并取出之前存放在 Session 里的内容。
+
+我们要明确一个事实，虽然我们一直将 Cookie 与 Session 放在一起来讲，甚至有可能将二者混为一谈，但 Session 不一定要依赖 Cookie（某些时候存在设置不接受 Cookie 的情况），也可以通过 URL 中参数带的 jsessionid 来做到，比如 /test/TestServlet;jsessionid=5AC6268DD8D4D5D1FDF5D41E9F2FD960?curAlbumID=9。浏览器是在 URL 之后加上 ;jsessionid= 这个固定搭配来传递 Session，不是普通的参数格式。
+
+
+
+
+
